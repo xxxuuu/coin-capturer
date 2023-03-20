@@ -43,6 +43,11 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
+
+			if util.ToDecimal(event.Tokens, 18).LessThan(util.ToDecimal(cfg.LowerLimitValue, 0)) {
+				continue
+			}
+
 			coins, err := capturer.GetBalance(cfg, event.From)
 			if err != nil {
 				log.Println(err)

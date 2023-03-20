@@ -13,13 +13,14 @@ type Config struct {
 	MonitoredWallet []string `koanf:"monitored_wallet"`
 	DingtalkToken   string   `koanf:"dingtalk_token"`
 	OklinkToken     string   `koanf:"oklink_token"`
+	LowerLimitValue string   `koanf:"lower_limit_value"`
 }
 
 func InitConfig() (*Config, error) {
 	k := koanf.New(".")
-	k.Load(file.Provider("config.yaml"), yaml.Parser())
-	k.Load(file.Provider("conf/config.yaml"), yaml.Parser())
-	k.Load(env.ProviderWithValue("", ".", func(s string, v string) (string, interface{}) {
+	_ = k.Load(file.Provider("config.yaml"), yaml.Parser())
+	_ = k.Load(file.Provider("conf/config.yaml"), yaml.Parser())
+	_ = k.Load(env.ProviderWithValue("", ".", func(s string, v string) (string, interface{}) {
 		key := strings.ToLower(s)
 		if strings.Contains(v, ",") {
 			return key, strings.Split(v, ",")
