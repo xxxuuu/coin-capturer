@@ -17,9 +17,10 @@ func (c Coin) String() string {
 }
 
 type TransferEvent struct {
-	TxHash      common.Hash
-	From        common.Address
-	FromBalance []Coin
-	To          common.Address
-	Tokens      decimal.Decimal
+	TxHash              common.Hash
+	From                common.Address
+	FromBalance         []Coin
+	FromTransactionList []Transaction
+	To                  common.Address
+	Tokens              decimal.Decimal
 }

@@ -5,6 +5,7 @@ import (
 	"coin-capturer/internal/capturer"
 	_ "embed"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"log"
 	"net/http"
 )
@@ -31,9 +32,17 @@ func New(token string) *DingTalk {
 func (d *DingTalk) OnTransfer(event *capturer.TransferEvent) {
 	url := fmt.Sprintf(URL, d.token)
 
+	// 筛选出最近有交易的币种
+	recentTransferCoin := map[common.Address]struct{}{}
+	for _, t := range event.FromTransactionList {
+		// API中返回的TokenContractAddress大多是空的，无法使用
+		recentTransferCoin[common.HexToAddress(t.TokenContractAddress)] = struct{}{}
+	}
 	var coinsMsg string
 	for _, c := range event.FromBalance {
-		coinsMsg += fmt.Sprintf(COINS_CONTENT, c.Name, c.Balance, c.Address)
+		if _, exists := recentTransferCoin[c.Address]; exists {
+			coinsMsg += fmt.Sprintf(COINS_CONTENT, c.Name, c.Balance, c.Address)
+		}
 	}
 
 	post := fmt.Sprintf(POST_CONTENT,
@@ -51,11 +60,12 @@ func (d *DingTalk) OnTransfer(event *capturer.TransferEvent) {
 		),
 	)
 
-	fmt.Println(post)
 	var jsonStr = []byte(post)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonStr))
 	if err != nil {
 		log.Println(err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 }

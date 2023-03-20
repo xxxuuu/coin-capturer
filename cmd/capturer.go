@@ -14,13 +14,13 @@ import (
 )
 
 func main() {
-	config, err := config.InitConfig()
+	cfg, err := config.InitConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("loaded config: %+v", config)
+	log.Printf("loaded config: %+v", cfg)
 
-	l := listener.New(config)
+	l := listener.New(cfg)
 	logs := make(chan types.Log)
 	sub, err := l.Run(logs)
 	if err != nil {
@@ -29,10 +29,10 @@ func main() {
 
 	var notices []notice.Notice
 	notices = append(notices, terminal.New())
-	if config.DingtalkToken != "" {
-		notices = append(notices, dingtalk.New(config.DingtalkToken))
+	if cfg.DingtalkToken != "" {
+		notices = append(notices, dingtalk.New(cfg.DingtalkToken))
 	}
-	log.Printf("notices: %+v", config)
+	log.Printf("notices: %+v", cfg)
 
 	for {
 		select {
@@ -43,20 +43,26 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
-			coins, err := capturer.GetBalance(config, event.From)
+			coins, err := capturer.GetBalance(cfg, event.From)
 			if err != nil {
 				log.Println(err)
 			}
 			if coins == nil {
 				coins = []capturer.Coin{}
 			}
+			transactionList, err := capturer.GetTransactionList(cfg, event.From)
+			if err != nil {
+				log.Println(err)
+				transactionList = []capturer.Transaction{}
+			}
 
 			transferEvent := &capturer.TransferEvent{
-				TxHash:      vLog.TxHash,
-				From:        event.From,
-				FromBalance: coins,
-				To:          event.To,
-				Tokens:      util.ToDecimal(event.Tokens, 18),
+				TxHash:              vLog.TxHash,
+				From:                event.From,
+				FromBalance:         coins,
+				FromTransactionList: transactionList,
+				To:                  event.To,
+				Tokens:              util.ToDecimal(event.Tokens, 18),
 			}
 
 			for _, n := range notices {
