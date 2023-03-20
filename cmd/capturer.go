@@ -1,17 +1,20 @@
 package main
 
 import (
+	"coin-capturer/internal/capturer"
+	"coin-capturer/internal/config"
 	"coin-capturer/internal/erc20"
 	"coin-capturer/internal/listener"
+	"coin-capturer/internal/notice"
+	"coin-capturer/internal/notice/dingtalk"
+	"coin-capturer/internal/notice/terminal"
 	"coin-capturer/internal/util"
-	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
 	"log"
-	"time"
 )
 
 func main() {
-	config, err := listener.InitConfig()
+	config, err := config.InitConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,6 +27,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var notices []notice.Notice
+	notices = append(notices, terminal.New())
+	if config.DingtalkToken != "" {
+		notices = append(notices, dingtalk.New(config.DingtalkToken))
+	}
+	log.Printf("notices: %+v", config)
+
 	for {
 		select {
 		case err := <-sub.Err():
@@ -33,8 +43,25 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Printf("[%s] Received transfer event - Tx Hash: %s, From: %s, To: %s, Value: %s USDT\n",
-				time.Now().Format("2006-01-02 15:04:05"), vLog.TxHash.Hex(), event.From.Hex(), event.To.Hex(), util.ToDecimal(event.Tokens, 18))
+			coins, err := capturer.GetBalance(config, event.From)
+			if err != nil {
+				log.Println(err)
+			}
+			if coins == nil {
+				coins = []capturer.Coin{}
+			}
+
+			transferEvent := &capturer.TransferEvent{
+				TxHash:      vLog.TxHash,
+				From:        event.From,
+				FromBalance: coins,
+				To:          event.To,
+				Tokens:      util.ToDecimal(event.Tokens, 18),
+			}
+
+			for _, n := range notices {
+				n.OnTransfer(transferEvent)
+			}
 		}
 	}
 }

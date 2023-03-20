@@ -1,4 +1,4 @@
-package listener
+package config
 
 import (
 	"github.com/knadh/koanf/parsers/yaml"
@@ -11,6 +11,8 @@ import (
 type Config struct {
 	NodeAddress     string   `koanf:"node_address"`
 	MonitoredWallet []string `koanf:"monitored_wallet"`
+	DingtalkToken   string   `koanf:"dingtalk_token"`
+	OklinkToken     string   `koanf:"oklink_token"`
 }
 
 func InitConfig() (*Config, error) {

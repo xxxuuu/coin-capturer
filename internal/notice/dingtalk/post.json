@@ -1,0 +1,12 @@
+{
+  "msgtype": "markdown",
+  "markdown": {
+    "title": "交易捕获: %s USDT",
+    "text": "%s"
+  },
+  "at": {
+    "atMobiles": [],
+    "atUserIds": [],
+    "isAtAll": false
+  }
+}

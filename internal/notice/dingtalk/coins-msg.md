@@ -1,0 +1,1 @@
+- %s: %s ([AVE](https://ave.ai/token/%s-bsc))

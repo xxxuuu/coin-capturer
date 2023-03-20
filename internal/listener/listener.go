@@ -1,6 +1,7 @@
 package listener
 
 import (
+	config2 "coin-capturer/internal/config"
 	"coin-capturer/internal/erc20"
 	"context"
 	"github.com/ethereum/go-ethereum"
@@ -12,10 +13,10 @@ import (
 const USDT = "0x55d398326f99059fF775485246999027B3197955"
 
 type Listener struct {
-	config *Config
+	config *config2.Config
 }
 
-func New(config *Config) *Listener {
+func New(config *config2.Config) *Listener {
 	return &Listener{
 		config: config,
 	}
