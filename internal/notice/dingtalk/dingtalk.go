@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/shopspring/decimal"
 	"log"
 	"net/http"
 )
@@ -33,15 +34,21 @@ func (d *DingTalk) OnTransfer(event *capturer.TransferEvent) {
 	url := fmt.Sprintf(URL, d.token)
 
 	// 筛选出最近有交易的币种
-	recentTransferCoin := map[common.Address]struct{}{}
+	balance := map[common.Address]capturer.Coin{}
+	for _, c := range event.FromBalance {
+		balance[c.Address] = c
+	}
+	recentTransferCoin := map[common.Address]capturer.Transaction{}
 	for _, t := range event.FromTransactionList {
-		// API中返回的TokenContractAddress大多是空的，无法使用
-		recentTransferCoin[common.HexToAddress(t.TokenContractAddress)] = struct{}{}
+		recentTransferCoin[common.HexToAddress(t.TokenContractAddress)] = t
 	}
 	var coinsMsg string
-	for _, c := range event.FromBalance {
-		if _, exists := recentTransferCoin[c.Address]; exists {
-			coinsMsg += fmt.Sprintf(COINS_CONTENT, c.Name, c.Balance, c.Address)
+	for addr := range recentTransferCoin {
+		if _, exists := balance[addr]; exists {
+			coinsMsg += fmt.Sprintf(COINS_CONTENT, balance[addr].Name, balance[addr].Balance, balance[addr].Address)
+		} else {
+			coinsMsg += fmt.Sprintf(COINS_CONTENT,
+				recentTransferCoin[addr].TransactionSymbol, decimal.Zero, recentTransferCoin[addr].TokenContractAddress)
 		}
 	}
 
